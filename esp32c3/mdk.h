@@ -13,6 +13,26 @@
 #define BIT(x) ((uint32_t) 1U << (x))
 #define REG(x) ((volatile uint32_t *) (x))
 
+#define REG_WRITE(_r, _v) (                                                                           \
+  (*(volatile uint32_t *)(_r)) = (_v)                                                                 \
+)
+
+#define REG_READ(_r) (                                                                                \
+  (*(volatile uint32_t *)(_r))                                                                        \
+)
+
+#define SET_REG_MASK(_r, _m) (                                                                        \
+  REG_WRITE((_r), (REG_READ(_r) | (_m)))                                                              \
+)
+
+#define CLEAR_REG_MASK(_r, _m) (                                                                      \
+  REG_WRITE((_r), (REG_READ(_r) & (~(_m))))                                                           \
+)
+
+#define REG_SET_BITS(_r, _b, _m) (                                                                    \
+  REG_WRITE((_r), (REG_READ(_r) & ~((uint32_t)_m)) | (((uint32_t)_b) & ((uint32_t)_m)))               \
+)
+
 #define C3_SYSTEM 0x600c0000
 #define C3_SENSITIVE 0x600c1000
 #define C3_INTERRUPT 0x600c2000
@@ -55,6 +75,54 @@
 #define C3_I2S0 0x6002D000
 #define C3_APB_SARADC 0x60040000
 #define C3_AES_XTS 0x600CC000
+
+#define SYSTEM_PERIP_CLK_EN1_REG (C3_SYSTEM + 0x014)
+#define SYSTEM_PERIP_RST_EN1_REG (C3_SYSTEM + 0x01C)
+
+#define SYSTEM_CRYPTO_AES_CLK_EN BIT(1)
+#define SYSTEM_GDMA_CLK_EN BIT(6)
+
+#define SYSTEM_CRYPTO_AES_RST BIT(1)
+#define SYSTEM_CRYPTO_DS_RST BIT(4)
+#define SYSTEM_GDMA_RST BIT(6)
+
+/* GDMA */
+#define GDMA_IN_CONF0_CHn_REG(n) (C3_GDMA + 0x070 + (192*n))
+#define GDMA_OUT_CONF0_CHn_REG(n) (C3_GDMA + 0x0D0 + (192*n))
+#define GDMA_IN_RST_CHn (BIT(0))
+#define GDMA_OUT_RST_CHn (BIT(0))
+
+#define GDMA_IN_LINK_CHn_REG(n) (C3_GDMA + 0x080 + (192*n))
+#define GDMA_OUT_LINK_CHn_REG(n) (C3_GDMA + 0x0E0 + (192*n))
+#define GDMA_INLINK_ADDR_CHn 0x000FFFFF
+#define GDMA_OUTLINK_ADDR_CHn 0x000FFFFF
+#define GDMA_INLINK_START_CHn BIT(22)
+#define GDMA_OUTLINK_START_CHn BIT(21)
+
+#define GDMA_IN_PERI_SEL_CHn_REG(n) (C3_GDMA + 0x0A0 + (192*n))
+#define GDMA_OUT_PERI_SEL_CHn_REG(n) (C3_GDMA + 0x100 + (192*n))
+#define PERI_SEL_AES 6
+
+/* AES */
+#define AES_KEY_BASE (C3_AES + 0x00)
+#define AES_MODE_REG (C3_AES + 0x40)
+#define AES_TRIGGER_REG (C3_AES + 0x48)
+#define AES_STATE_REG (C3_AES + 0x4c)
+#define AES_IV_BASE (C3_AES + 0x50)
+#define AES_DMA_ENABLE_REG (C3_AES + 0x90)
+#define AES_BLOCK_MODE_REG (C3_AES + 0x94)
+#define AES_BLOCK_NUM_REG (C3_AES + 0x98)
+#define AES_INC_SEL_REG (C3_AES + 0x9C)
+#define AES_INT_ENA_REG (C3_AES + 0xB0)
+#define AES_DMA_EXIT_REG (C3_AES + 0xB8)
+
+#define AES_MODE_128_ENCRYPT 0
+#define AES_BLOCK_MODE_CTR 3
+#define AES_INC_32 0
+
+#define AES_STATE_IDLE 0
+#define AES_STATE_BUSY 1
+#define AES_STATE_DONE 2
 
 enum { GPIO_OUT_EN = 8, GPIO_OUT_FUNC = 341, GPIO_IN_FUNC = 85 };
 

@@ -2,7 +2,9 @@ PROG        ?= firmware
 ARCH        ?= esp32c3
 MDK         ?= $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 ESPUTIL     ?= $(MDK)/tools/esputil
-CFLAGS      ?= -W -Wall -Wextra -Werror -Wundef -Wshadow -pedantic \
+CFLAGS      ?= -W -Wall -Wextra -Werror -Wundef -Wshadow \
+			   -Wno-unused-variable \
+			   -Wno-unused-parameter \
                -Wdouble-promotion -fno-common -Wconversion \
                -march=rv32imc -mabi=ilp32 \
                -Os -ffunction-sections -fdata-sections \
