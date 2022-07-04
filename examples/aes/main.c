@@ -1,23 +1,18 @@
 #include <mdk.h>
 
 #include "util/util.h"
-
-typedef struct param {
-	uint8_t nonce[12];
-	uint8_t ctr[4];
-	uint8_t rk[2*11*16];
-} param;
+#include "common.h"
+//#include "aes_hw/aes_hw.h"
 
 extern void AES_128_keyschedule(const uint8_t *, uint8_t *);
 extern void AES_128_encrypt_ctr(param const *, const uint8_t *, uint8_t *, uint32_t);
 
-#define NUM_BLOCKS    256
-#define INPUT_LENGTH  (NUM_BLOCKS*16)
-#define OUTPUT_LENGTH (((INPUT_LENGTH+32)/32)*32)
-
 int main(void) {
     wdt_disable();
 	init_cycles();
+	
+	printf("out: %s", "");
+	return 0;
 	
 	// Test vectors from NIST SP 800-38A F.5.1
 	uint8_t nonce[12] = {0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,0xf8,0xf9,0xfa,0xfb};
@@ -31,45 +26,11 @@ int main(void) {
 	memcpy(p.ctr, ctr, 4);
 	memcpy(p.nonce, nonce, 12);
 
-	// Fill instruction cache and train branch predictors
-	AES_128_keyschedule(key, p.rk);
-	AES_128_keyschedule(key, p.rk);
-	AES_128_keyschedule(key, p.rk);
-	AES_128_keyschedule(key, p.rk);
-	uint32_t oldcount = get_cycles();
-	AES_128_keyschedule(key, p.rk);
-	uint32_t cyclecount = get_cycles()-oldcount;
-	
-	printf("count: %ld\n", cyclecount);
-	
-	// Print all round keys
-	unsigned int i, j;
-	for (i = 0; i < 2*11*4; ++i) {
-	    printf("rk[%2d]: ", i);
-	    for (j = 0; j < 4; ++j) {
-	        printf("%02x", p.rk[i*4+j]);
-	    }
-	    printf("\n%s", "");
-	}
-
-	printf("cyc: %u\n", (unsigned int)cyclecount);
-
-	// Fill instruction cache and train branch predictors
-	AES_128_encrypt_ctr(&p, in, out, INPUT_LENGTH);
-	AES_128_encrypt_ctr(&p, in, out, INPUT_LENGTH);
-	AES_128_encrypt_ctr(&p, in, out, INPUT_LENGTH);
-	AES_128_encrypt_ctr(&p, in, out, INPUT_LENGTH);
-	oldcount = get_cycles();
-	AES_128_encrypt_ctr(&p, in, out, INPUT_LENGTH);
-	cyclecount = get_cycles()-oldcount;
-
-	printf("cyc: %u\n", (unsigned int)cyclecount);
-
 	// Print ciphertext
 	memcpy(p.ctr, ctr, 4);
 	AES_128_encrypt_ctr(&p, in, out, INPUT_LENGTH);
 	printf("out: %s", "");
-	for (i = 0; i < INPUT_LENGTH; ++i) {
+	for (int i = 0; i < INPUT_LENGTH; ++i) {
 	    printf("%02x", out[i]);
 	}
 	printf("\n%s", "");
