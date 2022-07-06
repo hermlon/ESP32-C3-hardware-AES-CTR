@@ -2,7 +2,7 @@
 
 #include "util/util.h"
 #include "common.h"
-//#include "aes_hw/aes_hw.h"
+#include "aes_hw/aes_hw.h"
 
 extern void AES_128_keyschedule(const uint8_t *, uint8_t *);
 extern void AES_128_encrypt_ctr(param const *, const uint8_t *, uint8_t *, uint32_t);
@@ -10,9 +10,6 @@ extern void AES_128_encrypt_ctr(param const *, const uint8_t *, uint8_t *, uint3
 int main(void) {
     wdt_disable();
 	init_cycles();
-	
-	printf("out: %s", "");
-	return 0;
 	
 	// Test vectors from NIST SP 800-38A F.5.1
 	uint8_t nonce[12] = {0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,0xf8,0xf9,0xfa,0xfb};
@@ -22,13 +19,11 @@ int main(void) {
 	                            0xae,0x2d,0x8a,0x57,0x1e,0x03,0xac,0x9c,0x9e,0xb7,0x6f,0xac,0x45,0xaf,0x8e,0x51,
 	                            0x30,0xc8,0x1c,0x46,0xa3,0x5c,0xe4,0x11,0xe5,0xfb,0xc1,0x19,0x1a,0x0a,0x52,0xef};
 	uint8_t out[OUTPUT_LENGTH];
-	param p;
-	memcpy(p.ctr, ctr, 4);
-	memcpy(p.nonce, nonce, 12);
+	
+	memset(out, 0, OUTPUT_LENGTH);
 
 	// Print ciphertext
-	memcpy(p.ctr, ctr, 4);
-	AES_128_encrypt_ctr(&p, in, out, INPUT_LENGTH);
+	aes_hw_encrypt_ctr(key, nonce, in, out);
 	printf("out: %s", "");
 	for (int i = 0; i < INPUT_LENGTH; ++i) {
 	    printf("%02x", out[i]);
