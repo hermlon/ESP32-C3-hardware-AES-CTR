@@ -4,11 +4,11 @@
 .align 2
 init_cycles:
     /* write 0 to value register */
-    csrrwi x0, 0x7E2, 0
+    csrwi 0x7E2, 0
     /* count clock cycles */
-    csrrwi x0, 0x7E0, 1 
+    csrwi 0x7E0, 1 
     /* start counting, halt on max value */
-    csrrwi x0, 0x7E0, 3 
+    csrwi 0x7E0, 3 
 .size init_cycles,.-init_cycles
 
 .globl get_cycles

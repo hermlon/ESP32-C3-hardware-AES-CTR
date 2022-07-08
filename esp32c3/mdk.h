@@ -89,7 +89,6 @@
 #define SYSTEM_DMA_RST BIT(6)
 
 /* GDMA */
-#define DMA_INT_ST_CH0_REG (C3_GDMA + 0x00d8)
 #define DMA_IN_CONF0_CH0_REG (C3_GDMA + 0x070)
 #define DMA_OUT_CONF0_CH0_REG (C3_GDMA + 0x0D0)
 
