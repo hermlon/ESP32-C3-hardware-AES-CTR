@@ -2,9 +2,10 @@
 
 #include "common.h"
 
-#define GDMA_CHN 1
+#define GDMA_CHN 0
 
 /* transmit to AES */
+
 static lldesc_t block_in_desc_2 = {
     .size = 4096-4,
     .length = 4096-4,
@@ -21,6 +22,7 @@ static lldesc_t block_in_desc = {
 };
 
 /* receive from AES */
+
 static lldesc_t block_out_desc_2 = {
     .size = 4096-16,
     .length = 0,
@@ -37,6 +39,7 @@ static lldesc_t block_out_desc = {
 };
 
 void print_status_regs() {
+    return;
     uint8_t n = GDMA_CHN;
     printf("78: %p\n", (void*)REG_READ(C3_GDMA + 0x78 + (192*n)));
     printf("84: %p\n", (void*)REG_READ(C3_GDMA + 0x84 + (192*n)));
@@ -57,16 +60,22 @@ void print_status_regs() {
 
 
 /* expects 256 blocks, so 4096 bytes */
-void aes_hw_encrypt_ctr(const uint8_t* key, const uint8_t* iv, const uint8_t* in, uint8_t* out) {
+void aes_hw_encrypt_ctr(const uint8_t* key, const uint8_t* iv, const uint8_t* in, uint8_t* out, uint32_t length) {
     block_in_desc.buf = in;
-    block_in_desc_2.buf = in;
+    block_in_desc.length = length & 0xfff;
+    //block_in_desc_2.buf = in;
     block_out_desc.buf = out;
-    block_out_desc_2.buf = out + OUTPUT_LENGTH;
+    //block_out_desc.length = length & 0xfff;
+
+    block_in_desc_2.buf = in;
+    block_out_desc_2.buf = out + INPUT_LENGTH;
     
+    /*
     printf("in: %p\n", in);
     printf("out: %p\n", out);
     printf("inlink: %p\n", (void*)&block_in_desc);
     printf("outlink: %p\n", (void*)&block_out_desc);
+    */
 
     /* periph_ll_enable_clk_clear_rst https://github.com/espressif/esp-idf/blob/16a4ee7c36a848ca155791677ce011f3ca75c519/components/hal/esp32c3/include/hal/clk_gate_ll.h#L202 */
     // enable AES clock
@@ -123,7 +132,7 @@ void aes_hw_encrypt_ctr(const uint8_t* key, const uint8_t* iv, const uint8_t* in
     //}
     while(block_out_desc.owner != 0) {
     }
-    printf("done\n%s", "");
+    //printf("done\n%s", "");
 
 }
 
