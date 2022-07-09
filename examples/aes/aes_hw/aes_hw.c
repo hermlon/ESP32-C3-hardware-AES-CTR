@@ -2,6 +2,8 @@
 
 #include "common.h"
 
+#define GDMA_CHN 1
+
 /* transmit to AES */
 static lldesc_t block_in_desc_2 = {
     .size = 4096-4,
@@ -35,20 +37,21 @@ static lldesc_t block_out_desc = {
 };
 
 void print_status_regs() {
-    printf("78: %p\n", (void*)REG_READ(C3_GDMA + 0x78));
-    printf("84: %p\n", (void*)REG_READ(C3_GDMA + 0x84));
-    printf("88: %p\n", (void*)REG_READ(C3_GDMA + 0x88));
-    printf("8c: %p\n", (void*)REG_READ(C3_GDMA + 0x8c));
-    printf("90: %p\n", (void*)REG_READ(C3_GDMA + 0x90));
-    printf("94: %p\n", (void*)REG_READ(C3_GDMA + 0x94));
-    printf("98: %p\n", (void*)REG_READ(C3_GDMA + 0x98));
-    printf("d8: %p\n", (void*)REG_READ(C3_GDMA + 0xd8));
-    printf("e4: %p\n", (void*)REG_READ(C3_GDMA + 0xe4));
-    printf("e8: %p\n", (void*)REG_READ(C3_GDMA + 0xe8));
-    printf("ec: %p\n", (void*)REG_READ(C3_GDMA + 0xec));
-    printf("f0: %p\n", (void*)REG_READ(C3_GDMA + 0xf0));
-    printf("f4: %p\n", (void*)REG_READ(C3_GDMA + 0xf4));
-    printf("f8: %p\n", (void*)REG_READ(C3_GDMA + 0xf8));
+    uint8_t n = GDMA_CHN;
+    printf("78: %p\n", (void*)REG_READ(C3_GDMA + 0x78 + (192*n)));
+    printf("84: %p\n", (void*)REG_READ(C3_GDMA + 0x84 + (192*n)));
+    printf("88: %p\n", (void*)REG_READ(C3_GDMA + 0x88 + (192*n)));
+    printf("8c: %p\n", (void*)REG_READ(C3_GDMA + 0x8c + (192*n)));
+    printf("90: %p\n", (void*)REG_READ(C3_GDMA + 0x90 + (192*n)));
+    printf("94: %p\n", (void*)REG_READ(C3_GDMA + 0x94 + (192*n)));
+    printf("98: %p\n", (void*)REG_READ(C3_GDMA + 0x98 + (192*n)));
+    printf("d8: %p\n", (void*)REG_READ(C3_GDMA + 0xd8 + (192*n)));
+    printf("e4: %p\n", (void*)REG_READ(C3_GDMA + 0xe4 + (192*n)));
+    printf("e8: %p\n", (void*)REG_READ(C3_GDMA + 0xe8 + (192*n)));
+    printf("ec: %p\n", (void*)REG_READ(C3_GDMA + 0xec + (192*n)));
+    printf("f0: %p\n", (void*)REG_READ(C3_GDMA + 0xf0 + (192*n)));
+    printf("f4: %p\n", (void*)REG_READ(C3_GDMA + 0xf4 + (192*n)));
+    printf("f8: %p\n", (void*)REG_READ(C3_GDMA + 0xf8 + (192*n)));
     printf("--------------------------------%s\n", "");
 }
 
@@ -130,34 +133,34 @@ void esp_aes_dma_start(const lldesc_t *input, const lldesc_t *output) {
 
     // 1. Set GDMA_OUT_RST_CH0 first to 1 and then to 0, to reset the state machine of GDMA’s transmit channel and FIFO pointer
     // in and out
-    SET_REG_MASK(DMA_IN_CONF0_CH0_REG, GDMA_IN_RST_CH0);
-    SET_REG_MASK(DMA_OUT_CONF0_CH0_REG, GDMA_OUT_RST_CH0);
-    CLEAR_REG_MASK(DMA_IN_CONF0_CH0_REG, GDMA_IN_RST_CH0);
-    CLEAR_REG_MASK(DMA_OUT_CONF0_CH0_REG, GDMA_OUT_RST_CH0);
+    SET_REG_MASK(DMA_IN_CONF0_CHn_REG(GDMA_CHN), GDMA_IN_RST_CHn);
+    SET_REG_MASK(DMA_OUT_CONF0_CHn_REG(GDMA_CHN), GDMA_OUT_RST_CHn);
+    CLEAR_REG_MASK(DMA_IN_CONF0_CHn_REG(GDMA_CHN), GDMA_IN_RST_CHn);
+    CLEAR_REG_MASK(DMA_OUT_CONF0_CHn_REG(GDMA_CHN), GDMA_OUT_RST_CHn);
 
     print_status_regs();
 
     // 2. Load an outlink, and configure GDMA_OUTLINK_ADDR_CHn with address of the first transmit descriptor
     // in
-    REG_SET_BITS(DMA_IN_LINK_CH0_REG, output, DMA_INLINK_ADDR_CH0);
+    REG_SET_BITS(DMA_IN_LINK_CHn_REG(GDMA_CHN), output, DMA_INLINK_ADDR_CHn);
     // out
-    REG_SET_BITS(DMA_OUT_LINK_CH0_REG, input, DMA_OUTLINK_ADDR_CH0);
+    REG_SET_BITS(DMA_OUT_LINK_CHn_REG(GDMA_CHN), input, DMA_OUTLINK_ADDR_CHn);
 
     print_status_regs();
 
     // 3. Configure GDMA_PERI_OUT_SEL_CHn with the value corresponding to the peripheral to be connected, as shown in Table 2-1
     // in
-    REG_WRITE(DMA_IN_PERI_SEL_CH0_REG, PERI_SEL_AES);
+    REG_WRITE(DMA_IN_PERI_SEL_CHn_REG(GDMA_CHN), PERI_SEL_AES);
     // out
-    REG_WRITE(DMA_OUT_PERI_SEL_CH0_REG, PERI_SEL_AES);
+    REG_WRITE(DMA_OUT_PERI_SEL_CHn_REG(GDMA_CHN), PERI_SEL_AES);
 
     print_status_regs();
 
     // 4. Set GDMA_OUTLINK_START_CHn to enable GDMA’s transmit channel for data transfer
     // in
-    SET_REG_MASK(DMA_INLINK_ADDR_CH0, DMA_INLINK_START_CH0);
+    SET_REG_MASK(DMA_IN_LINK_CHn_REG(GDMA_CHN), DMA_INLINK_START_CHn);
     // out
-    SET_REG_MASK(DMA_OUTLINK_ADDR_CH0, DMA_OUTLINK_START_CH0);
+    SET_REG_MASK(DMA_OUT_LINK_CHn_REG(GDMA_CHN), DMA_OUTLINK_START_CHn);
 
     print_status_regs();
 }
