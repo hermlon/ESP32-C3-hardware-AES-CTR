@@ -3,23 +3,35 @@
 #include "common.h"
 
 /* transmit to AES */
-static lldesc_t block_in_desc = {
+static lldesc_t block_in_desc_2 = {
     .size = 4096-4,
     .length = 4096-4,
-    .eof = 1,
-    .sosf = 0,
+    .suc_eof = 1,
     .owner = 1,
     .qe = NULL
 };
+static lldesc_t block_in_desc = {
+    .size = 4096-4,
+    .length = 4096-4,
+    .suc_eof = 0,
+    .owner = 1,
+    .qe = &block_in_desc_2
+};
 
 /* receive from AES */
-static lldesc_t block_out_desc = {
+static lldesc_t block_out_desc_2 = {
     .size = 4096-16,
-    .length = 4096-16,
-    .eof = 1,
-    .sosf = 0,
+    .length = 0,
+    .suc_eof = 1,
     .owner = 1,
     .qe = NULL
+};
+static lldesc_t block_out_desc = {
+    .size = 4096-16,
+    .length = 0,
+    .suc_eof = 0,
+    .owner = 1,
+    .qe = &block_out_desc_2
 };
 
 void print_status_regs() {
@@ -44,7 +56,10 @@ void print_status_regs() {
 /* expects 256 blocks, so 4096 bytes */
 void aes_hw_encrypt_ctr(const uint8_t* key, const uint8_t* iv, const uint8_t* in, uint8_t* out) {
     block_in_desc.buf = in;
+    block_in_desc_2.buf = in;
     block_out_desc.buf = out;
+    block_out_desc_2.buf = out + OUTPUT_LENGTH;
+    
     printf("in: %p\n", in);
     printf("out: %p\n", out);
     printf("inlink: %p\n", (void*)&block_in_desc);
@@ -100,7 +115,7 @@ void aes_hw_encrypt_ctr(const uint8_t* key, const uint8_t* iv, const uint8_t* in
     /* 4. wait until AES done */
     //while(REG_READ(AES_STATE_REG) != AES_STATE_DONE) {
     //    printf("%ld\n", REG_READ(AES_STATE_REG));
-    ////printf("INT: %ld\n", REG_READ(DMA_INT_ST_CH0_REG));
+    //printf("INT: %ld\n", REG_READ(DMA_INT_ST_CH0_REG));
     //printf("INT: %p\n", (void*)REG_READ(DMA_INT_ST_CH0_REG));
     //}
     while(block_out_desc.owner != 0) {
