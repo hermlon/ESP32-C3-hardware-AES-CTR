@@ -1,5 +1,5 @@
 # Aes benchmark
 
 ```sh
-$ make clean build flash"
+make clean build flash monitor
 ```
