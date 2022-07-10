@@ -64,48 +64,38 @@ void aes_hw_encrypt_ctr(const uint8_t* key, const uint8_t* iv, const uint8_t* in
     SET_REG_MASK(SYSTEM_PERIP_CLK_EN1_REG, (SYSTEM_CRYPTO_AES_CLK_EN | SYSTEM_GDMA_CLK_EN));
     // Clear reset on digital signature, otherwise AES unit is held in reset also.
     CLEAR_REG_MASK(SYSTEM_PERIP_RST_EN1_REG, (SYSTEM_CRYPTO_AES_RST | SYSTEM_CRYPTO_DS_RST | SYSTEM_GDMA_RST));
-    
-    // select AES mode:
-    REG_WRITE(AES_MODE_REG, AES_MODE_128_ENCRYPT);
 
-    // copy key to hardware registers
+    /* 1. connect GDMA with AES */
+    esp_aes_dma_start(&block_in_desc, &block_out_desc);
+    
+    /* 2. Initialize the AES accelerator-related registers */
+    REG_WRITE(AES_DMA_ENABLE_REG, 1); /* enable DMA mode */
+    REG_WRITE(AES_INT_ENA_REG, 0); /* disable interrupts */
+    REG_WRITE(AES_MODE_REG, AES_MODE_128_ENCRYPT); /* select encryption and keylength */
+    
+    /* copy key to hardware registers */
     uint32_t key_word;
     for(int i = 0; i < 4; i++) {
         memcpy(&key_word, key + i*4, 4);
         REG_WRITE(((uint32_t*)AES_KEY_BASE) + i, key_word);
     }
-
-    // set block mode to CTR
-    REG_WRITE(AES_BLOCK_MODE_REG, AES_BLOCK_MODE_CTR);
-
-    // set incrementing function
-    REG_WRITE(AES_INC_SEL_REG, AES_INC_32);
-
-    // copy IV / Initial Counter Block
+    
+    REG_WRITE(AES_BLOCK_MODE_REG, AES_BLOCK_MODE_CTR); /* set block mode to CTR */
+    REG_WRITE(AES_BLOCK_NUM_REG, blocks); /* set number of blocks */
+    REG_WRITE(AES_INC_SEL_REG, AES_INC_32); /* set incrementing function */
+    
+    /* copy IV / Initial Counter Block */
     uint32_t iv_word;
     for(int i = 0; i < 4; i++) {
         memcpy(&iv_word, iv + i*4, 4);
         REG_WRITE(((uint32_t*)AES_IV_BASE) + i, iv_word);
     }
     
-    // disable interrupts
-    REG_WRITE(AES_INT_ENA_REG, 0);
-
-    /* 1. connect DMA with AES */
-    esp_aes_dma_start(&block_in_desc, &block_out_desc);
-    
-    /* 2. Initialize the AES accelerator-related registers */
-    REG_WRITE(AES_DMA_ENABLE_REG, 1);
-    
-    // set number of blocks
-    REG_WRITE(AES_BLOCK_NUM_REG, blocks);
-    
     /* 3. start operation */
     REG_WRITE(AES_TRIGGER_REG, 1);
-    
     /* 4. wait until AES done */
     while(REG_READ(AES_STATE_REG) != AES_STATE_DONE) {}
-    /* make sure GDMA transfer is complete */
+    /* 5. make sure GDMA transfer is complete */
     while(block_in_desc.owner != 0 && block_in_desc.suc_eof != 1) {}
 }
 

@@ -98,7 +98,8 @@ int main(void) {
     wdt_disable();
 
 	//benchmark_aes_asm(3);
-	benchmark_aes_hw(255);
+	benchmark_aes_hw(2);
+	benchmark_aes_hw(2);
 
 	return 0;
 }
