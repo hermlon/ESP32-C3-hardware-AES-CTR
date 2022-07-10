@@ -97,8 +97,8 @@ void benchmark_aes_hw(uint32_t blocks) {
 int main(void) {
     wdt_disable();
 
-	benchmark_aes_asm(3);
-	benchmark_aes_hw(3);
+	//benchmark_aes_asm(3);
+	benchmark_aes_hw(255);
 
 	return 0;
 }
