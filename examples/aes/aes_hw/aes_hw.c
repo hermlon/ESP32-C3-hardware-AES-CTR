@@ -3,16 +3,16 @@
 #define GDMA_CHN 0
 
 /* receive from AES */
-static lldesc_t block_in_desc = {
-    .size = 4096-4,
+static lldesc_t inlink = {
+    .size = 4080,
     .suc_eof = 0,
     .owner = 1,
     .qe = NULL
 };
 
 /* transmit to AES */
-static lldesc_t block_out_desc = {
-    .size = 4096-4,
+static lldesc_t outlink = {
+    .size = 4080,
     .suc_eof = 1,
     .owner = 1,
     .qe = NULL
@@ -26,9 +26,9 @@ void print_status_regs(int num) {
     
     uint32_t interrupt = REG_READ(C3_GDMA + 0x04 + (16*n));
     printf("INT: %p\n", (void*)interrupt);
-    printf("len: %d\n", block_in_desc.length);
-    printf("eof: %d\n", block_in_desc.suc_eof);
-    printf("own: %d\n", block_in_desc.owner);
+    printf("len: %d\n", inlink.length);
+    printf("eof: %d\n", inlink.suc_eof);
+    printf("own: %d\n", inlink.owner);
 
     uint32_t r78 = REG_READ(C3_GDMA + 0x78 + (192*n));
     printf("RX fifo      78: %p ", (void*)r78);
@@ -53,9 +53,9 @@ void print_status_regs(int num) {
 void aes_hw_encrypt_ctr(const uint8_t* key, const uint8_t* iv, const uint8_t* in, uint8_t* out, uint32_t blocks) {
     uint32_t length = blocks * 16;
 
-    block_in_desc.buf = out;
-    block_out_desc.buf = in;
-    block_out_desc.length = length & 0xfff;
+    inlink.buf = out;
+    outlink.buf = in;
+    outlink.length = length & 0xfff;
 
     /* periph_ll_enable_clk_clear_rst https://github.com/espressif/esp-idf/blob/495d35949d50033ebcb89def98f107aa267388c0/components/hal/esp32c3/include/hal/clk_gate_ll.h#L202 */
     // enable AES and GDMA clock
@@ -64,7 +64,7 @@ void aes_hw_encrypt_ctr(const uint8_t* key, const uint8_t* iv, const uint8_t* in
     CLEAR_REG_MASK(SYSTEM_PERIP_RST_EN1_REG, (SYSTEM_CRYPTO_AES_RST | SYSTEM_CRYPTO_DS_RST | SYSTEM_GDMA_RST));
 
     /* 1. connect GDMA with AES */
-    esp_aes_dma_start(&block_in_desc, &block_out_desc);
+    esp_aes_dma_start(&inlink, &outlink);
     
     /* 2. Initialize the AES accelerator-related registers */
     REG_WRITE(AES_DMA_ENABLE_REG, 1); /* enable DMA mode */
@@ -94,34 +94,27 @@ void aes_hw_encrypt_ctr(const uint8_t* key, const uint8_t* iv, const uint8_t* in
     /* 4. wait until AES done */
     while(REG_READ(AES_STATE_REG) != AES_STATE_DONE) {}
     /* 5. make sure GDMA transfer is complete */
-    while(block_in_desc.owner != 0 && block_in_desc.suc_eof != 1) {}
-    /* 7. release AES Accelerator */
+    while(inlink.owner != 0 && inlink.suc_eof != 1) {}
+    /* 7. release AES accelerator */
     REG_WRITE(AES_DMA_EXIT_REG, 0);
 }
 
 void esp_aes_dma_start(const lldesc_t *input, const lldesc_t *output) {
-    // 1. Set GDMA_OUT_RST_CH0 first to 1 and then to 0, to reset the state machine of GDMA’s transmit channel and FIFO pointer
-    // in and out
+    // 1. reset GDMA
     SET_REG_MASK(GDMA_IN_CONF0_CHn_REG(GDMA_CHN), GDMA_IN_RST_CHn);
     SET_REG_MASK(GDMA_OUT_CONF0_CHn_REG(GDMA_CHN), GDMA_OUT_RST_CHn);
     CLEAR_REG_MASK(GDMA_IN_CONF0_CHn_REG(GDMA_CHN), GDMA_IN_RST_CHn);
     CLEAR_REG_MASK(GDMA_OUT_CONF0_CHn_REG(GDMA_CHN), GDMA_OUT_RST_CHn);
 
-    // 2. Load an outlink, and configure GDMA_OUTLINK_ADDR_CHn with address of the first transmit descriptor
-    // in
+    // 2. load out- and inlink
     REG_SET_BITS(GDMA_IN_LINK_CHn_REG(GDMA_CHN), input, GDMA_INLINK_ADDR_CHn);
-    // out
     REG_SET_BITS(GDMA_OUT_LINK_CHn_REG(GDMA_CHN), output, GDMA_OUTLINK_ADDR_CHn);
 
-    // 3. Configure GDMA_PERI_OUT_SEL_CHn with the value corresponding to the peripheral to be connected, as shown in Table 2-1
-    // in
+    // 3. select AES peripheral
     REG_WRITE(GDMA_IN_PERI_SEL_CHn_REG(GDMA_CHN), PERI_SEL_AES);
-    // out
     REG_WRITE(GDMA_OUT_PERI_SEL_CHn_REG(GDMA_CHN), PERI_SEL_AES);
 
-    // 4. Set GDMA_OUTLINK_START_CHn to enable GDMA’s transmit channel for data transfer
-    // in
+    // 4. start transfer
     SET_REG_MASK(GDMA_IN_LINK_CHn_REG(GDMA_CHN), GDMA_INLINK_START_CHn);
-    // out
     SET_REG_MASK(GDMA_OUT_LINK_CHn_REG(GDMA_CHN), GDMA_OUTLINK_START_CHn);
 }

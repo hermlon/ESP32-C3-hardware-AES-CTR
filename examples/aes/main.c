@@ -16,7 +16,7 @@ extern void AES_128_encrypt_ctr(param const *, const uint8_t *, uint8_t *, uint3
 #define INPUT_LENGTH  (NUM_BLOCKS*16)
 #define OUTPUT_LENGTH (((INPUT_LENGTH+32)/32)*32)
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 /* original benchmark from https://github.com/Ko-/riscvcrypto/blob/master/aes128ctrbs/aes.c */
 uint32_t benchmark_aes_asm(uint32_t blocks) {
