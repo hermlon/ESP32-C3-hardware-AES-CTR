@@ -116,6 +116,7 @@
 #define AES_BLOCK_NUM_REG (C3_AES + 0x98)
 #define AES_INC_SEL_REG (C3_AES + 0x9C)
 #define AES_INT_ENA_REG (C3_AES + 0xB0)
+#define AES_DMA_EXIT_REG (C3_AES + 0xB8)
 
 #define AES_MODE_128_ENCRYPT 0
 #define AES_BLOCK_MODE_CTR 3

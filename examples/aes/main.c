@@ -100,6 +100,9 @@ int main(void) {
 	//benchmark_aes_asm(3);
 	benchmark_aes_hw(2);
 	benchmark_aes_hw(2);
+	benchmark_aes_hw(2);
+	benchmark_aes_hw(2);
+	benchmark_aes_hw(2);
 
 	return 0;
 }

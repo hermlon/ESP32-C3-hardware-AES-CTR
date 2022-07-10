@@ -97,6 +97,8 @@ void aes_hw_encrypt_ctr(const uint8_t* key, const uint8_t* iv, const uint8_t* in
     while(REG_READ(AES_STATE_REG) != AES_STATE_DONE) {}
     /* 5. make sure GDMA transfer is complete */
     while(block_in_desc.owner != 0 && block_in_desc.suc_eof != 1) {}
+    /* 7. release AES Accelerator */
+    REG_WRITE(AES_DMA_EXIT_REG, 0);
 }
 
 void esp_aes_dma_start(const lldesc_t *input, const lldesc_t *output) {
