@@ -1,7 +1,5 @@
 #include "aes_hw.h"
 
-#include "common.h"
-
 #define GDMA_CHN 0
 
 /* receive from AES */

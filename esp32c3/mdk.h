@@ -76,8 +76,6 @@
 #define C3_APB_SARADC 0x60040000
 #define C3_AES_XTS 0x600CC000
 
-/* https://github.com/espressif/esp-idf/blob/master/components/soc/esp32c3/include/soc/gdma_reg.h */
-
 #define SYSTEM_PERIP_CLK_EN1_REG (C3_SYSTEM + 0x014)
 #define SYSTEM_PERIP_RST_EN1_REG (C3_SYSTEM + 0x01C)
 

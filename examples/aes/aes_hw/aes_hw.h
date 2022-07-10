@@ -2,7 +2,6 @@
 #define AES_HW_H
 
 #include <mdk.h>
-#include "common.h"
 #include "lldesc.h"
 
 /* Number of bytes in an AES block */

@@ -1,12 +1,11 @@
 #ifndef LLDESC_H
 #define LLDESC_H
 
-/*
- * https://github.com/espressif/esp-idf/blob/master/components/esp_rom/include/esp32c3/rom/lldesc.h 
- */
-
 #include <mdk.h>
 
+/*
+ * adapted from https://github.com/espressif/esp-idf/blob/master/components/esp_rom/include/esp32c3/rom/lldesc.h 
+ */
 typedef struct lldesc_s {
     volatile uint32_t size  : 12,
              length: 12,
